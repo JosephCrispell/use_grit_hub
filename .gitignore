@@ -1,3 +1,6 @@
+# Mac crap
+.DS_Store
+
 # GitHub authorisation cache
 .httr-oauth
 
