@@ -11,6 +11,10 @@ setwd(current_script_directory)
 # Load bespoke functions
 source("api_functions.R")
 
+# Note my GitHub account base url
+my_username <- "josephcrispell"
+my_root_url <- paste0("https://api.github.com/users/", my_username)
+
 #### Connect to GitHub API ####
 
 # Get credentials from environmental variables
@@ -27,8 +31,23 @@ github_api_token <- connect_to_github_api(
 
 #### Request API data ####
 
-# Get repository names
-my_repository_info <- github_api_get_request(
-  query_url = "https://api.github.com/users/josephcrispell/repos",
+# Get repository urls
+repos_info <- github_api_get_request(
+  query_url = paste(my_root_url, "repos", sep = "/"),
   github_api_token = github_api_token
+)
+
+# Get the commits for all repos
+repo_urls <- paste0(unlist(my_repos_info$url), "/commits")
+my_commits <- lapply(head(repo_urls),
+  FUN = github_api_get_request,
+  github_api_token
+)
+test <- do.call(rbind, my_commits)
+
+# Get commits for single repo
+test <- github_api_get_request(
+  query_url = paste0(my_root_url, "basicPlotteR/commits"),
+  github_api_token = github_api_token,
+  page = 200
 )

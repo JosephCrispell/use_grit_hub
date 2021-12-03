@@ -1,10 +1,19 @@
+get_repo_commits_through_time <- function(repo_url, github_api_token) {
+
+  # Get the commit info for current repo
+}
+
 #' Send request to GitHub API
 #'
 #' @param query_url character vector representing URL to use in query
-#' @param github_api_token  API token to use alongside query
+#' @param github_api_token API token to use alongside query
+#' @param flatten_nested_dataframes Whether to flatten nested dataframes into
+#'    single. Defaults to TRUE.
+#' @param page API results are paginated, set which page. Defaults to 1
 #'
 #' @return dataframe with result from query
-github_api_get_request <- function(query_url, github_api_token) {
+github_api_get_request <- function(query_url, github_api_token,
+                                   flatten_nested_dataframes = TRUE, page = 1) {
 
   # Check query url is string
   check_string(query_url, "API query")
@@ -17,6 +26,9 @@ github_api_get_request <- function(query_url, github_api_token) {
     )
   }
 
+  # Add page to query url
+  query_url <- paste0(query_url, "?page=", page)
+
   # Send request
   request <- httr::GET(query_url, github_api_token)
 
@@ -28,7 +40,14 @@ github_api_get_request <- function(query_url, github_api_token) {
   request_json <- jsonlite::toJSON(request_jsonlite)
 
   # Convert to a data.frame
-  request_dataframe <- jsonlite::fromJSON(request_json)
+  request_dataframe <- jsonlite::fromJSON(request_json,
+    flatten = flatten_nested_dataframes
+  )
+
+  # Check data returned
+  if (length(request_dataframe) == 0) {
+    warning("No data returned for query!")
+  }
 
   return(request_dataframe)
 }
@@ -36,14 +55,11 @@ github_api_get_request <- function(query_url, github_api_token) {
 #' Connect to github API
 #'
 #' Uses the httr functionality to connect to GitHub API and prepare for requests
-#' @param app_name
-#' @param id
-#' @param secret
+#' @param app_name name used when creating GitHub app
+#' @param id application ID
+#' @param secret application secret
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return GitHub token for use in GitHub API requests
 connect_to_github_api <- function(app_name, id, secret) {
 
   # Check app_name, id, and secret
