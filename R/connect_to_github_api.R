@@ -11,10 +11,6 @@ setwd(current_script_directory)
 # Load bespoke functions
 source("api_functions.R")
 
-# Note my GitHub account base url
-my_username <- "josephcrispell"
-my_root_url <- paste0("https://api.github.com/users/", my_username)
-
 #### Connect to GitHub API ####
 
 # Get credentials from environmental variables
@@ -33,7 +29,7 @@ github_api_token <- connect_to_github_api(
 
 # Get repository urls
 repos_info <- github_api_get_request(
-  query_url = paste(my_root_url, "repos", sep = "/"),
+  query_url = "https://api.github.com/users/repos",
   github_api_token = github_api_token
 )
 
@@ -46,8 +42,11 @@ my_commits <- lapply(head(repo_urls),
 test <- do.call(rbind, my_commits)
 
 # Get commits for single repo
-test <- github_api_get_request(
-  query_url = paste0(my_root_url, "basicPlotteR/commits"),
+url <- "https://api.github.com/repos/JosephCrispell/basicPlotteR/commits"
+test <- github_api_request_multi_page(
+  query_url = url,
   github_api_token = github_api_token,
-  page = 200
+  date_time_threshold = strptime("2021-07-01", format = "%F"),
+  date_time_column = "commit.author.date"
 )
+test

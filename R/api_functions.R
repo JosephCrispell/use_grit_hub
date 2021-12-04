@@ -1,6 +1,75 @@
-get_repo_commits_through_time <- function(repo_url, github_api_token) {
+#' Title
+#'
+#' @param query_url
+#' @param github_api_token
+#' @param flatten_nested_dataframe
+#' @param date_threshold
+#'
+#' @return
+#' @export
+#'
+#' @examples
+github_api_request_multi_page <- function(query_url, github_api_token,
+                                          date_time_threshold = NULL,
+                                          date_time_column = NULL,
+                                          date_time_format = "%FT%TZ",
+                                          page_length = 30) {
 
-  # Get the commit info for current repo
+  # Get the first page of results
+  cat("\rQuerying page 1")
+  query_results <- github_api_request(
+    query_url, github_api_token,
+    flatten_nested_dataframes = TRUE
+  )
+
+  # Create a dataframe to store all the results
+  all_query_results <- query_results
+
+  # Examine all other pages
+  page <- 2
+  while (length(query_results) != 0) {
+
+    # Check date threshold hasn't been surpassed
+    if (is.null(date_time_threshold) == FALSE &&
+      is.null(date_time_column) == FALSE &&
+      date_time_column %in% colnames(all_query_results)) {
+
+      # Format the date column
+      all_query_results[, date_time_column] <- list(strptime(
+        all_query_results[, date_time_column],
+        format = date_time_format
+      ))
+
+      # Check if any dates before threshold are present
+      if (sum(all_query_results[, date_time_column] < date_time_threshold)
+      > 0) {
+        all_query_results <- all_query_results[
+          all_query_results[, date_time_column] > date_time_threshold,
+        ]
+        break
+      }
+    }
+
+    # Check if more pages available
+    if (nrow(query_results) < page_length) {
+      break
+    }
+
+    # Get the current page of results
+    cat("\rQuerying page", page)
+    query_results <- github_api_request(query_url, github_api_token,
+      flatten_nested_dataframes = TRUE,
+      page = page
+    )
+
+    # Store the results
+    all_query_results <- rbind(all_query_results, query_results)
+
+    # Increment the page
+    page <- page + 1
+  }
+
+  return(all_query_results)
 }
 
 #' Send request to GitHub API
@@ -12,8 +81,8 @@ get_repo_commits_through_time <- function(repo_url, github_api_token) {
 #' @param page API results are paginated, set which page. Defaults to 1
 #'
 #' @return dataframe with result from query
-github_api_get_request <- function(query_url, github_api_token,
-                                   flatten_nested_dataframes = TRUE, page = 1) {
+github_api_request <- function(query_url, github_api_token,
+                               flatten_nested_dataframes = TRUE, page = 1) {
 
   # Check query url is string
   check_string(query_url, "API query")
