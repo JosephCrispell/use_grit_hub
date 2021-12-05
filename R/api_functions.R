@@ -1,25 +1,30 @@
-#' Title
+#' Send request to GitHub API and collect results across multiple pages
 #'
-#' @param query_url
-#' @param github_api_token
-#' @param flatten_nested_dataframe
-#' @param date_threshold
+#' @param query_url character vector representing URL to use in query
+#' @param github_api_token API token to use alongside query
+#' @param date_time_threshold only results after date time threshold will be
+#'     retained. Defaults to NULL - ignored.
+#' @param date_time_column column in results with date time. Defaults to NULL.
+#' @param date_time_format format of date times. Defaults to "%FT%TZ"
+#'     (e.g. "2021-09-17T19:19:10Z")
+#' @param per_page Number of results per page. Defaults to 30. Maximum of 100.
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return dataframe with result from query
 github_api_request_multi_page <- function(query_url, github_api_token,
                                           date_time_threshold = NULL,
                                           date_time_column = NULL,
                                           date_time_format = "%FT%TZ",
-                                          page_length = 30) {
+                                          per_page = 30) {
+
+  # Check the date time threshold
+  check_date_format(date_time_threshold, date_time_format)
 
   # Get the first page of results
   cat("\rQuerying page 1")
   query_results <- github_api_request(
     query_url, github_api_token,
-    flatten_nested_dataframes = TRUE
+    flatten_nested_dataframes = TRUE,
+    per_page = per_page
   )
 
   # Create a dataframe to store all the results
@@ -51,7 +56,7 @@ github_api_request_multi_page <- function(query_url, github_api_token,
     }
 
     # Check if more pages available
-    if (nrow(query_results) < page_length) {
+    if (nrow(query_results) < per_page) {
       break
     }
 
@@ -59,7 +64,8 @@ github_api_request_multi_page <- function(query_url, github_api_token,
     cat("\rQuerying page", page)
     query_results <- github_api_request(query_url, github_api_token,
       flatten_nested_dataframes = TRUE,
-      page = page
+      page = page,
+      per_page = per_page
     )
 
     # Store the results
@@ -72,6 +78,17 @@ github_api_request_multi_page <- function(query_url, github_api_token,
   return(all_query_results)
 }
 
+check_date_format <- function(date, format) {
+  if (is.null(date) == FALSE &&
+    inherits(date, format)) {
+    stop(
+      "The date provided was of class \"",
+      class(date), "\" and should be of class \"", format, "\". ",
+      "Please provide the date in the correct format."
+    )
+  }
+}
+
 #' Send request to GitHub API
 #'
 #' @param query_url character vector representing URL to use in query
@@ -79,10 +96,12 @@ github_api_request_multi_page <- function(query_url, github_api_token,
 #' @param flatten_nested_dataframes Whether to flatten nested dataframes into
 #'    single. Defaults to TRUE.
 #' @param page API results are paginated, set which page. Defaults to 1
+#' @param per_page Number of results per page. Defaults to 30. Maximum of 100.
 #'
 #' @return dataframe with result from query
 github_api_request <- function(query_url, github_api_token,
-                               flatten_nested_dataframes = TRUE, page = 1) {
+                               flatten_nested_dataframes = TRUE,
+                               page = 1, per_page = 30) {
 
   # Check query url is string
   check_string(query_url, "API query")
@@ -95,8 +114,17 @@ github_api_request <- function(query_url, github_api_token,
     )
   }
 
-  # Add page to query url
-  query_url <- paste0(query_url, "?page=", page)
+  # Check per_page parameter
+  if (per_page > 100) {
+    per_page <- 100
+    warning(
+      "The per_page parameter exceeds the maximum value (100) and has been",
+      " set to 100."
+    )
+  }
+
+  # Add page and page length to query url
+  query_url <- paste0(query_url, "?page=", page, "&per_page=", per_page)
 
   # Send request
   request <- httr::GET(query_url, github_api_token)

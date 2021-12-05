@@ -28,13 +28,13 @@ github_api_token <- connect_to_github_api(
 #### Request API data ####
 
 # Get repository urls
-repos_info <- github_api_get_request(
-  query_url = "https://api.github.com/users/repos",
+repos_info <- github_api_request(
+  query_url = "https://api.github.com/users/JosephCrispell/repos",
   github_api_token = github_api_token
 )
 
 # Get the commits for all repos
-repo_urls <- paste0(unlist(my_repos_info$url), "/commits")
+repo_urls <- paste0(unlist(repos_info$url), "/commits")
 my_commits <- lapply(head(repo_urls),
   FUN = github_api_get_request,
   github_api_token
@@ -42,11 +42,12 @@ my_commits <- lapply(head(repo_urls),
 test <- do.call(rbind, my_commits)
 
 # Get commits for single repo
-url <- "https://api.github.com/repos/JosephCrispell/basicPlotteR/commits"
+url <- "https://api.github.com/repos/JosephCrispell/get-linting-in-r/commits"
 test <- github_api_request_multi_page(
   query_url = url,
   github_api_token = github_api_token,
   date_time_threshold = strptime("2021-07-01", format = "%F"),
-  date_time_column = "commit.author.date"
+  date_time_column = "commit.author.date",
+  per_page = 150
 )
 test
