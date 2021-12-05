@@ -78,7 +78,14 @@ github_api_request_multi_page <- function(query_url, github_api_token,
   return(all_query_results)
 }
 
-check_date_format <- function(date, format) {
+#' Check date format
+#'
+#' Stops (or sends warning) code if date in wrong format
+#' @param date date
+#' @param format format of date
+#' @param warn send warning if incorrect format. Defaults to FALSE
+#'   (throws error).
+check_date_format <- function(date, format, warn = FALSE) {
   if (is.null(date) == FALSE &&
     inherits(date, format)) {
     stop(
