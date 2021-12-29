@@ -11,6 +11,9 @@ setwd(current_script_directory)
 # Load bespoke functions
 source("api_functions.R")
 
+# Note git username
+github_user <- "JosephCrispell"
+
 #### Connect to GitHub API ####
 
 # Get credentials from environmental variables
@@ -25,7 +28,7 @@ github_api_token <- connect_to_github_api(
   secret = github_client_secret
 )
 
-#### Request API data ####
+#### Request commit history ####
 
 # Get repository urls
 repos_info <- github_api_request(
@@ -33,21 +36,31 @@ repos_info <- github_api_request(
   github_api_token = github_api_token
 )
 
-# Get the commits for all repos
+# Get the commit information for all repos
 repo_urls <- paste0(unlist(repos_info$url), "/commits")
-my_commits <- lapply(head(repo_urls),
-  FUN = github_api_get_request,
-  github_api_token
-)
-test <- do.call(rbind, my_commits)
-
-# Get commits for single repo
-url <- "https://api.github.com/repos/JosephCrispell/get-linting-in-r/commits"
-test <- github_api_request_multi_page(
-  query_url = url,
+names(repo_urls) <- repos_info$name
+my_commits <- lapply(repo_urls,
+  FUN = github_api_request_multi_page,
   github_api_token = github_api_token,
   date_time_threshold = strptime("2021-07-01", format = "%F"),
   date_time_column = "commit.author.date",
-  per_page = 150
+  per_page = 100
 )
-test
+names(my_commits) <- names(repo_urls)
+
+# Combine results into single data.frame
+my_commits <- do.call(rbind, my_commits)
+my_commits$repo <- gsub("\\.[[:digit:]]+$", "", rownames(my_commits))
+
+# Filter for commits by me
+my_commits <- my_commits[my_commits$author.login == github_user, ]
+
+#### Plot contributions graph ####
+
+# Count number of commits by day
+my_commits$date <- as.Date(trunc(my_commits$commit.author.date, "day"))
+commits_by_day <- aggregate(my_commits$date,
+  FUN = length,
+  by = list("Date" = my_commits$date)
+)
+colnames(commits_by_day)[2] <- "n_commits"

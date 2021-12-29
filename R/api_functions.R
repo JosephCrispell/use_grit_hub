@@ -20,7 +20,7 @@ github_api_request_multi_page <- function(query_url, github_api_token,
   check_date_format(date_time_threshold, date_time_format)
 
   # Get the first page of results
-  cat("\rQuerying page 1")
+  cat("\r URL:", query_url, "querying page 1\t\t\t\t\t\t\t\t\t")
   query_results <- github_api_request(
     query_url, github_api_token,
     flatten_nested_dataframes = TRUE,
@@ -61,7 +61,7 @@ github_api_request_multi_page <- function(query_url, github_api_token,
     }
 
     # Get the current page of results
-    cat("\rQuerying page", page)
+    cat("\r URL:", query_url, "querying page", page, "\t\t\t\t\t\t\t\t")
     query_results <- github_api_request(query_url, github_api_token,
       flatten_nested_dataframes = TRUE,
       page = page,
