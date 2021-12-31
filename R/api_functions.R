@@ -1,3 +1,62 @@
+get_repo_commit_info <- function(repo_urls, github_api_token,
+                                 author_github_user = NULL,
+                                 date_threshold = NULL) {
+
+  # Format date threshold
+  if (is.null(date_threshold) == FALSE) {
+    date_threshold <- strptime(as.character(date_threshold), format = "%F")
+  }
+
+  # Build repo urls into API commit query
+  repo_urls <- paste0(repo_urls, "/commits")
+
+  # Get commit information for each repo
+  commit_info <- lapply(
+    repo_urls,
+    FUN = github_api_request_multi_page,
+    github_api_token = github_api_token,
+    date_time_threshold = date_threshold,
+    date_time_column = "commit.author.date",
+    per_page = 100
+  )
+  names(commit_info) <- names(repo_urls)
+
+  # Combine results into single data.frame
+  commit_info <- do.call(rbind, commit_info)
+  commit_info$repo <- gsub("\\.[[:digit:]]+$", "", rownames(commit_info))
+
+  # Filter for commits by author
+  if (is.null(author_github_user) == FALSE) {
+    commit_info <- commit_info[
+      commit_info$author.login == author_github_user,
+    ]
+  }
+
+  return(commit_info)
+}
+
+github_get_repos <- function(github_user_snake_case, github_api_token) {
+
+  # Build API url
+  query_url <- paste0(
+    "https://api.github.com/users/",
+    github_user_snake_case,
+    "/repos"
+  )
+
+  # Get repository urls
+  repos_info <- github_api_request(
+    query_url = query_url,
+    github_api_token = github_api_token
+  )
+
+  # Get the commit information for all repos
+  repo_urls <- unlist(repos_info$url)
+  names(repo_urls) <- repos_info$name
+
+  return(repo_urls)
+}
+
 #' Send request to GitHub API and collect results across multiple pages
 #'
 #' @param query_url character vector representing URL to use in query

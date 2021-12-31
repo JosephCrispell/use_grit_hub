@@ -1,3 +1,22 @@
+count_contributions_by_day <- function(contribution_info, date_column,
+                                       count_name = "Count") {
+
+  # Extract day from dates
+  contribution_info$date <- as.Date(
+    trunc(contribution_info[, date_column], "day")
+  )
+
+  # Count by day
+  dates <- contribution_info[, date_column, drop = TRUE]
+  contributions_by_day <- aggregate(dates,
+    FUN = length,
+    by = list("date" = dates)
+  )
+  colnames(contributions_by_day)[2] <- "count_name"
+
+  return(contributions_by_day)
+}
+
 #' Add empty rows for dates without contributions
 #'
 #' @param contributions_by_day data frame recording number of each type of
