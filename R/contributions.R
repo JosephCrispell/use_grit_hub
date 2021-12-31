@@ -11,7 +11,7 @@ count_contributions_by_day <- function(contribution_info, date_column,
                                        count_name = "Count") {
 
   # Extract day from dates
-  contribution_info$date <- as.Date(
+  contribution_info[, date_column] <- as.Date(
     trunc(contribution_info[, date_column], "day")
   )
 
@@ -21,7 +21,7 @@ count_contributions_by_day <- function(contribution_info, date_column,
     FUN = length,
     by = list("date" = dates)
   )
-  colnames(contributions_by_day)[2] <- "count_name"
+  colnames(contributions_by_day)[2] <- count_name
 
   return(contributions_by_day)
 }
@@ -50,7 +50,8 @@ insert_days_with_no_counts <- function(contributions_by_day,
     date = dates[dates %in% contributions_by_day$date == FALSE]
   )
   days_with_no_contributions <- add_empty_columns(
-    days_with_no_contributions, contributions_columns
+    days_with_no_contributions, contributions_columns,
+    value = 0
   )
 
   # Add to contributions data
@@ -69,11 +70,12 @@ insert_days_with_no_counts <- function(contributions_by_day,
 #'
 #' @param data data.frame to add columns to
 #' @param columns_to_add vector of column names to add
+#' @param value value to insert into columns. Defaults to NA.
 #'
 #' @return data with columns added with NA values
-add_empty_columns <- function(data, columns_to_add) {
+add_empty_columns <- function(data, columns_to_add, value = NA) {
   for (column in columns_to_add) {
-    data[, columns_to_add] <- NA
+    data[, columns_to_add] <- value
   }
 
   return(data)
