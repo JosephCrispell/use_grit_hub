@@ -1,3 +1,12 @@
+#' Add empty rows for dates without contributions
+#'
+#' @param contributions_by_day data frame recording number of each type of
+#'                             contribution
+#' @param today today's date. Defaults to Sys.Date()
+#' @param year_ago date for one year ago. Defaults to today - 365
+#'
+#' @return contributions_by_day data.frame with empty rows insert for
+#'         missing dates
 insert_days_with_no_counts <- function(contributions_by_day,
                                        today = Sys.Date(),
                                        year_ago = today - 365) {
@@ -28,6 +37,12 @@ insert_days_with_no_counts <- function(contributions_by_day,
   return(contributions_by_day)
 }
 
+#' Add new empty columns by name to data.frame
+#'
+#' @param data data.frame to add columns to
+#' @param columns_to_add vector of column names to add
+#'
+#' @return data with columns added with NA values
 add_empty_columns <- function(data, columns_to_add) {
   for (column in columns_to_add) {
     data[, columns_to_add] <- NA
@@ -36,6 +51,17 @@ add_empty_columns <- function(data, columns_to_add) {
   return(data)
 }
 
+#' Pads contributions by day to fit week structure
+#'
+#' Days of week order defaults to starting on Sunday. This function
+#' pads contributions data.frame if doesn't start on a Sunday and
+#' end on a Saturday.
+#' @param contributions_by_day data frame recording number of each type of
+#'                             contribution
+#' @param days_of_week character vector of days of week abbreviations used
+#'                     to set week order. Defaults to Sun -> Sat.
+#'
+#' @return contributions_by_day padded to match week order
 pad_contributions_to_week <- function(contributions_by_day,
                                       days_of_week = c(
                                         "Sun", "Mon", "Tue",
@@ -101,6 +127,17 @@ pad_contributions_to_week <- function(contributions_by_day,
   return(contributions_by_day)
 }
 
+#' Creates contribution matrix from contributions by day counts
+#'
+#' @param contributions_by_day data frame recording number of each type of
+#'                             contribution
+#' @param days_of_week character vector of days of week abbreviations used
+#'                     to set week order. Defaults to Sun -> Sat.
+#'
+#' @return contributions matrix counting contributions by day with rows
+#' representing days of the week (starting on a Sunday) and columns
+#' representing weeks of a year.
+#' @export
 create_contributions_matrix <- function(contributions_by_day,
                                         days_of_week = c(
                                           "Sun", "Mon", "Tue",
