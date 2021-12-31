@@ -1,3 +1,19 @@
+#' Get commit information for selection of repositories
+#'
+#' Note repositories provided as GitHub API URLs and an
+#' author GitHub username can be used to filter commits.
+#' In addition, a date threshold can be used to avoid
+#' historic commit information.
+#' @param repo_urls named vector of GitHub API URLs representing repositories
+#'                  provided by github_get_repos() function.
+#' @param github_api_token GitHub API token
+#' @param author_github_user optional username to filter commits by.
+#'                           Defaults to NULL.
+#' @param date_threshold optional date threshold (Date) to filter commits
+#'                       prior to it.
+#'
+#' @return commit information in a data frame for repos provided
+#' @export
 get_repo_commit_info <- function(repo_urls, github_api_token,
                                  author_github_user = NULL,
                                  date_threshold = NULL) {
@@ -35,12 +51,19 @@ get_repo_commit_info <- function(repo_urls, github_api_token,
   return(commit_info)
 }
 
-github_get_repos <- function(github_user_snake_case, github_api_token) {
+#' Get repositories associated with GitHub user
+#'
+#' @param github_user_camelCase GitHub username in camelCase
+#' @param github_api_token GitHub API token
+#'
+#' @return named (with repo name) of URLs for each repository identified
+#' @export
+github_get_repos <- function(github_user_camel_case, github_api_token) {
 
   # Build API url
   query_url <- paste0(
     "https://api.github.com/users/",
-    github_user_snake_case,
+    github_user_camel_case,
     "/repos"
   )
 

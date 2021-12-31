@@ -1,3 +1,12 @@
+#' Count contributions to GitHub by day
+#'
+#' @param contribution_info data frame of data about contributions to GitHub
+#'                          by date
+#' @param date_column date column in contribution_info
+#' @param count_name name of column in output for counts. Defaults to "Count".
+#'
+#' @return counts by date in data frame
+#' @export
 count_contributions_by_day <- function(contribution_info, date_column,
                                        count_name = "Count") {
 
